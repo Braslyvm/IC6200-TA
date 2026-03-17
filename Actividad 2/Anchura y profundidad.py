@@ -24,8 +24,25 @@ class Grafo:
         }
         self.visitados = []
 
-    def busqueda_anchura(self, inicio):
-        pass
+    def busqueda_anchura(self, inicio,objetivo) :
+        cola = [[inicio]] 
+        visitados = []
+
+        while cola:
+            camino = cola.pop(0) 
+            nodo = camino[-1]
+
+            if nodo == objetivo:
+                return camino  
+
+            if nodo not in visitados:
+                visitados.append(nodo)
+                for vecino in self.diccionario[nodo]:
+                    if vecino not in visitados:
+                        nuevo_camino = camino + [vecino]
+                        cola.append(nuevo_camino)
+
+        return None
 
     def busqueda_profundidad(self, inicio, objetivo, visitados=None, optimo=None):
         if visitados is None:
