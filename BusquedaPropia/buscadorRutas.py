@@ -23,35 +23,18 @@ grafo = {
     "Neamt": {"Iasi": 87} 
 }
 
-def calcularcosto():
-    costos = []
-    for ruta in optimo:
-        costo = 0
-        for i in range(len(ruta) - 1):
-            costo += grafo[ruta[i]][ruta[i + 1]]
-        costos.append(costo)
-    if costos:
-        return min(costos)
-    else:
-        return None
-
-def imprimirlista(lista):
-    print("inicio")
-    for i in lista:
-        print(" -> " + str(i))
-    print("")   
+ 
 
 def busqueda_profundidad(inicio, objetivo, visitados):
     if inicio == objetivo:
         optimo.append(visitados + [inicio])
-        return None
+        return True
     for vecino in grafo[inicio]:
         if vecino not in visitados:
-            busqueda_profundidad(vecino, objetivo, visitados + [inicio])
-
+            if busqueda_profundidad(vecino, objetivo, visitados + [inicio]) != True:
+                break
     if visitados == []:
-        mejor = calcularcosto()
-        print(len(optimo))
+        print(optimo)
     return None
 
 
