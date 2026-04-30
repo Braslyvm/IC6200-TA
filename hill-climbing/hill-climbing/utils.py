@@ -141,8 +141,6 @@ def cost(map):
 
     
 
-
-
 def move(pos, pos_2):
     """
     Add two coordinates component-wise.
@@ -154,8 +152,7 @@ def move(pos, pos_2):
     Returns:
         tuple[int, int]: New coordinate as (x1 + x2, y1 + y2).
     """
-
-    raise NotImplementedError("move is not implemented yet")
+    return (pos[0] + pos_2[0], pos[1] + pos_2[1])
 
 
 def actions(map, hospital_position):
@@ -169,5 +166,13 @@ def actions(map, hospital_position):
     Returns:
         list[tuple[int, int]]: Valid neighboring positions that are in bounds and free.
     """
+    movimientos = [MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT]
+    lista = []
 
-    raise NotImplementedError("actions is not implemented yet")
+    for m in movimientos:
+        nueva_pos = move(hospital_position, m)
+
+        if is_valid_move(map, nueva_pos) and is_free_to_move(map, nueva_pos):
+            lista.append(nueva_pos)
+
+    return lista
