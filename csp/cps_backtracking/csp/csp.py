@@ -84,6 +84,17 @@ def backtracking(
 
 
 def _neighbors(name: str, constraints: list[str]):
+    resultado = []
+    for x in constraints:
+        left, right = x.split("!=")
+
+        if name == left:
+            resultado.append(right)
+        elif name == right:
+            resultado.append(left)
+    return resultado
+
+
     #     for each constraint in constraints
     #         left, right <- split the constraint by "!="
 
@@ -94,10 +105,15 @@ def _neighbors(name: str, constraints: list[str]):
 
     #     return result
 
-    raise Exception("Not implemented")
-
 
 def _arc_satisfied(x: str, y: str, X: Course, Y: Course, constraints: list[str]):
+
+    for b in constraints:
+        left, right = b.split("!=")
+        if (X.name == left and Y.name == right) or (X.name == right and Y.name == left):
+            if x == y:
+                return False
+    return True
 
     #     for each constraint in constraints
     #         left, right <- split the constraint by "!="
@@ -107,10 +123,20 @@ def _arc_satisfied(x: str, y: str, X: Course, Y: Course, constraints: list[str])
     #                 return false
 
     #     return true
-    raise Exception("Not implemented")
-
 
 def revise(X: Course, Y: Course, constraints: list[str]):
+    revised = False
+
+    for x_value in X.domain[:]:
+        # aquí aplicas el "not" correctamente
+        if not any(
+            _arc_satisfied(x_value, y_value, X, Y, constraints)
+            for y_value in Y.domain
+        ):
+            X.domain.remove(x_value)
+            revised = True
+
+    return revised
 
     #     revised <- false
 
@@ -120,10 +146,31 @@ def revise(X: Course, Y: Course, constraints: list[str]):
     #             revised <- true
 
     #     return revised
-    raise Exception("Not implemented")
 
 
 def ac3(courses: list[Course], constraints: list[str]):
+    course_map = {course.name: course for course in courses}
+    queue = deque()
+
+    for constraint in constraints:
+        left, right = constraint.split("!=")
+
+        queue.append((left, right))
+        queue.append((right, left))
+    while queue:
+        x, y = queue.popleft()
+        X = course_map[x]
+        Y = course_map[y]
+
+        if revise(X, Y, constraints):
+            if not X.domain:
+                return False
+
+            for z in _neighbors(x, constraints):
+                if z != y:
+                    queue.append((z, x))
+    return True
+
     #     course map <- dictionary of courses using the name as key
     #     queue <- empty deque
 
@@ -146,15 +193,35 @@ def ac3(courses: list[Course], constraints: list[str]):
     #                     add (z name, x name) to queue
 
     #     return true
-    raise Exception("Not implemented")
 
 
 def select_mrv(unassigned: list[Course], constraints: list[str]):
+    x = []
+
+    for course in unassigned:
+        if x == [] or len(course.domain) < len(x[0].domain):
+            x = [course]
+        elif len(course.domain) == len(x[0].domain):
+            x.append(course)
+
+    return x[0]
+
+
+
     #     return the course in unassigned with the smallest domain
-    raise Exception("Not implemented")
 
 
 def _degree(course: Course, unassigned_names, constraints: list[str]):
+
+    count = 0
+    for x in constraints:
+        left, right = x.split("!=")
+
+        if course.name == left and right in unassigned_names:
+            count += 1
+        elif course.name == right and left in unassigned_names:
+            count += 1
+    return count    
     #     count <- 0
 
     #     for each constraint in constraints
@@ -171,6 +238,16 @@ def _degree(course: Course, unassigned_names, constraints: list[str]):
 
 
 def select_degree(unassigned: list[Course], constraints: list[str]):
+    unassigned_names = {course.name for course in unassigned}
+    x = []
+    for course in unassigned:
+        degree = _degree(course, unassigned_names, constraints)
+        if x == [] or degree > _degree(x[0], unassigned_names, constraints):
+            x = [course]
+        elif degree == _degree(x[0], unassigned_names, constraints):
+            x.append(course)
+
+    return x[0]
 
     #     unassigned names <- set of names of unassigned courses
 
@@ -178,10 +255,25 @@ def select_degree(unassigned: list[Course], constraints: list[str]):
     #         involving that course where the other variable is also unassigned
 
     #     return the course with the highest degree
-    raise Exception("Not implemented")
-
 
 def select_mrv_degree(unassigned: list[Course], constraints: list[str]):
+    min_size = select_mrv(unassigned, constraints)
+    candidates = [course for course in unassigned if len(course.domain) == len(min_size.domain)]
+    if len(candidates) == 1:
+        return candidates[0]
+    unassigned_names = {course.name for course in unassigned}
+    x = []
+    for course in candidates:
+        degree = _degree(course, unassigned_names, constraints)
+        if x == [] or degree > _degree(x[0], unassigned_names, constraints):
+            x = [course]
+        elif degree == _degree(x[0], unassigned_names, constraints):
+            x.append(course)
+    return x[0] 
+
+
+
+
     #     min size <- smallest domain size among unassigned courses
     #     candidates <- all unassigned courses whose domain size equals min size
 
@@ -194,10 +286,10 @@ def select_mrv_degree(unassigned: list[Course], constraints: list[str]):
     #         involving that candidate where the other variable is also unassigned
 
     #     return the candidate with the highest degree
-    raise Exception("Not implemented")
 
 
 def _select_first(unassigned: list[Course], constraints: list[str]):
+    return unassigned[0]
     #     return the first course in unassigned
     raise Exception("Not implemented")
 
@@ -208,6 +300,32 @@ def backtracking_with_inference(
     constraints: list[str],
     select=_select_first,
 ):
+    if not unassigned:
+        return True 
+    course = select(unassigned, constraints)
+    remaining = [c for c in unassigned if c != course]
+    for day in course.domain:
+        course.assign(day)
+
+        if not is_consistent(course, assigned, constraints):
+            course.remove_assignment()
+            continue
+
+        assigned.append(course)
+
+        saved_domains = {c.name: c.domain[:] for c in remaining + assigned}
+        course.domain = [day]
+
+        if ac3(remaining + assigned, constraints):
+            if backtracking_with_inference(remaining, assigned, constraints, select):
+                return True
+
+        for c in remaining + assigned:
+            c.domain = saved_domains[c.name]
+
+        assigned.pop()
+        course.remove_assignment()
+    return False    
     #     if unassigned is empty
     #         return true
 
@@ -235,4 +353,3 @@ def backtracking_with_inference(
     #         remove course from assigned
     #         remove the assignment from the course
     #     return false
-    raise Exception("Not implemented")
