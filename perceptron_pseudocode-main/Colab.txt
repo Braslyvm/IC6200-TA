@@ -1,0 +1,19 @@
+Questions to answer:
+
+1. What happens to the MSE when you train for more epochs?
+
+Entre mas épocas el MSE es menor por lo que se acerca a un resultado más acertado 2. What happens if the learning rate is too small?
+
+Entre más pequeño es el porcentaje de aprendizaje, el cambio entre épocas es muy mínimo.
+
+3. What happens if the learning rate is too large?
+
+Se vuelve inestable porque se intenta poner los valores w y b perfectos pero eso ocasiona que oscile mucho entre estados.
+
+4. Why do we normalize before training?
+
+Porque para que el modelo trabaje correctamente los valores fahrenheit y celsius deben estar en una escala similar. El agente no conoce de formulas y necesita encontrar un punto medio donde pueda trabajar y "suponer".
+
+5. What do w and b control in the graph?
+
+la w es la pendinete y la b la intereccion con el eje y
