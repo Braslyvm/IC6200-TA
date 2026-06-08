@@ -176,6 +176,42 @@ class Or(Sentence):
             if self.disjuncts
             else set()
         )
+class Xor(Sentence):
+    def __init__(self, *operands):
+        for operand in operands:
+            Sentence.validate(operand)
+        self.operands = list(operands)
+
+    def __eq__(self, other):
+        return isinstance(other, Xor) and self.operands == other.operands
+
+    def __hash__(self):
+        return hash(("xor", tuple(hash(operand) for operand in self.operands)))
+
+    def __repr__(self):
+        operands = ", ".join([str(operand) for operand in self.operands])
+        return f"Xor({operands})"
+
+    def add(self, operand):
+        Sentence.validate(operand)
+        self.operands.append(operand)
+
+    def evaluate(self, model):
+        return sum(operand.evaluate(model) for operand in self.operands) % 2 == 1
+
+    def formula(self):
+        if len(self.operands) == 1:
+            return self.operands[0].formula()
+        return " ⊕ ".join(
+            [Sentence.parenthesize(operand.formula()) for operand in self.operands]
+        )
+
+    def symbols(self):
+        return (
+            set.union(*[operand.symbols() for operand in self.operands])
+            if self.operands
+            else set()
+        )
 
 
 class Implication(Sentence):
